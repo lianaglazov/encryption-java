@@ -1,10 +1,9 @@
-import static java.lang.Long.toBinaryString;
 import java.util.HashMap;
 
 public class DES {
 
-    long key;
-    long[] keys = new long[16];
+    String key;
+    String[] keys = new String[16];
 
     static int[] IP =
     {
@@ -77,6 +76,13 @@ public class DES {
         46, 42, 50, 36, 29, 32
     };
 
+    // the number of times the bits are shifted to the left each round in round key schedule
+
+    static int[] bitRotation = {
+        1, 1, 2, 2,	2, 2, 2, 2,
+        1, 2, 2, 2,	2, 2, 2, 1
+    };
+
     // S-boxes
     static int[][] s1 = {
         {14, 4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7},
@@ -134,7 +140,8 @@ public class DES {
         {2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6 ,11}
     };
 
-    DES(long key)
+    // the key is a 16-digit hex number
+    DES(String key)
     {
         this.key = key;
     }
@@ -219,11 +226,90 @@ public class DES {
         return hex;
     }
 
-    public void generateKeys(long key)
+    public String str2hex(String str)
     {
-        String binKey = toBinaryString(key);
+        StringBuilder sb = new StringBuilder();
+        char ch[] = str.toCharArray();
+        for (char c : ch) {
+            String hexString = Integer.toHexString(c);
+            sb.append(hexString);
+        }
+        return sb.toString();
+    }
 
+    public String hex2str(String hex) {
+        StringBuilder output = new StringBuilder();
 
+        for (int i = 0; i < hex.length(); i += 2) {
+            String str = hex.substring(i, i + 2);
+            output.append((char) Integer.parseInt(str, 16));
+        }
+
+        return output.toString();
+    }
+
+    // apply the permutation table to a binary block
+    public String permutation(String block, int[] perm)
+    {
+        String p = "";
+        for (int i = 0; i < perm.length; i ++) {
+            p = p + block.charAt(perm[i] - 1);
+        }
+        return p;
+    }
+
+    // shifting n bits to left
+    public String shiftLeft(String bin, int n)
+    {
+        String s = "";
+
+        for (int i = 0; i < n; i++){
+            for (int j = 1; j < bin.length(); j++){
+                s = s + bin.charAt(j);
+            }
+            s = s + bin.charAt(0);
+            bin = s;
+            s = "";
+        }
+
+        return bin;
+    }
+
+    public String xor(String a, String b)
+    {
+        String xor = "";
+        for (int i = 0; i < a.length(); i++){
+            if (a.charAt(i) == b.charAt(i)){
+                xor = xor + "0";
+            }
+            else  {
+                xor = xor + "1";
+            }
+        }
+        return xor;
+    }
+
+    public void generateKeys(String key)
+    {
+        String binKey = hex2bin(key);
+        // apply PC-1 64 bits to 56
+        binKey = permutation(binKey, PC1);
+
+        String left = binKey.substring(0, 28);
+        String right = binKey.substring(28);
+
+        for (int i = 0; i < 16; i++){
+
+            left = shiftLeft(left, bitRotation[i]);
+            right = shiftLeft(right, bitRotation[i]);
+
+            binKey = left + right;
+
+            // apply PC-2 56 to 48 bits
+            binKey = permutation(binKey, PC2);
+            System.out.println(bin2hex(binKey));
+            keys[i] = binKey;
+        }
     }
 
 
