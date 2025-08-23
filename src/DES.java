@@ -152,6 +152,25 @@ public class DES {
 
         hex = hex.toUpperCase();
 
+        HashMap<Character, String> hashMap = getCharacterStringHashMap();
+
+        int i;
+        char ch;
+
+        for (i = 0; i < hex.length(); i++) {
+            ch = hex.charAt(i);
+
+            if (hashMap.containsKey(ch))
+                binary += hashMap.get(ch);
+            else {
+                binary = "Invalid Hexadecimal String";
+                return binary;
+            }
+        }
+        return binary;
+    }
+
+    private static HashMap<Character, String> getCharacterStringHashMap() {
         HashMap<Character, String> hashMap = new HashMap<Character, String>();
 
         hashMap.put('0', "0000");
@@ -170,21 +189,7 @@ public class DES {
         hashMap.put('D', "1101");
         hashMap.put('E', "1110");
         hashMap.put('F', "1111");
-
-        int i;
-        char ch;
-
-        for (i = 0; i < hex.length(); i++) {
-            ch = hex.charAt(i);
-
-            if (hashMap.containsKey(ch))
-                binary += hashMap.get(ch);
-            else {
-                binary = "Invalid Hexadecimal String";
-                return binary;
-            }
-        }
-        return binary;
+        return hashMap;
     }
 
     public String  bin2hex(String bin)
