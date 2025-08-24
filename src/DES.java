@@ -4,6 +4,7 @@ public class DES {
 
     String key;
     String[] keys = new String[16];
+    int[][][] sboxes = {s1, s2, s3, s4, s5, s6, s7, s8};
 
     static int[] IP =
     {
@@ -146,31 +147,12 @@ public class DES {
         this.key = key;
     }
 
-    public String hex2bin(String hex)
+    String hex2bin(String hex)
     {
         String binary = "";
 
         hex = hex.toUpperCase();
 
-        HashMap<Character, String> hashMap = getCharacterStringHashMap();
-
-        int i;
-        char ch;
-
-        for (i = 0; i < hex.length(); i++) {
-            ch = hex.charAt(i);
-
-            if (hashMap.containsKey(ch))
-                binary += hashMap.get(ch);
-            else {
-                binary = "Invalid Hexadecimal String";
-                return binary;
-            }
-        }
-        return binary;
-    }
-
-    private static HashMap<Character, String> getCharacterStringHashMap() {
         HashMap<Character, String> hashMap = new HashMap<Character, String>();
 
         hashMap.put('0', "0000");
@@ -189,10 +171,24 @@ public class DES {
         hashMap.put('D', "1101");
         hashMap.put('E', "1110");
         hashMap.put('F', "1111");
-        return hashMap;
+
+        int i;
+        char ch;
+
+        for (i = 0; i < hex.length(); i++) {
+            ch = hex.charAt(i);
+
+            if (hashMap.containsKey(ch))
+                binary += hashMap.get(ch);
+            else {
+                binary = "Invalid Hexadecimal String";
+                return binary;
+            }
+        }
+        return binary;
     }
 
-    public String  bin2hex(String bin)
+    String  bin2hex(String bin)
     {
         String hex = "";
         HashMap<String, Character> hashMap = new HashMap<String, Character>();
@@ -231,7 +227,7 @@ public class DES {
         return hex;
     }
 
-    public String str2hex(String str)
+    String str2hex(String str)
     {
         StringBuilder sb = new StringBuilder();
         char ch[] = str.toCharArray();
@@ -242,7 +238,7 @@ public class DES {
         return sb.toString();
     }
 
-    public String hex2str(String hex) {
+    String hex2str(String hex) {
         StringBuilder output = new StringBuilder();
 
         for (int i = 0; i < hex.length(); i += 2) {
@@ -253,8 +249,35 @@ public class DES {
         return output.toString();
     }
 
+    String dec2bin(int dec)
+    {
+        String bin = "";
+
+        while(dec > 0){
+            bin = dec%2 + bin;
+            dec = dec/2;
+        }
+
+        while (bin.length()%4 != 0) {
+            bin = "0" + bin;
+        }
+
+        return bin;
+    }
+
+    int bin2dec(String bin)
+    {
+        int dec = 0;
+        for  (int i = 0; i < bin.length(); i++) {
+            int bit = bin.charAt(i) - 48;
+            int x = bin.length() - i - 1;
+            dec = (int) (dec + bit * Math.pow(2, x));
+        }
+        return dec;
+    }
+
     // apply the permutation table to a binary block
-    public String permutation(String block, int[] perm)
+    String permutation(String block, int[] perm)
     {
         String p = "";
         for (int i = 0; i < perm.length; i ++) {
@@ -264,7 +287,7 @@ public class DES {
     }
 
     // shifting n bits to left
-    public String shiftLeft(String bin, int n)
+    String shiftLeft(String bin, int n)
     {
         String s = "";
 
@@ -280,7 +303,7 @@ public class DES {
         return bin;
     }
 
-    public String xor(String a, String b)
+    String xor(String a, String b)
     {
         String xor = "";
         for (int i = 0; i < a.length(); i++){
@@ -294,7 +317,22 @@ public class DES {
         return xor;
     }
 
-    public void generateKeys(String key)
+    // a is always a 6 bit binary number
+    String applySbox(String a, int[][] S)
+    {
+        // the outer bits
+        String b = Character.toString(a.charAt(0)) + Character.toString(a.charAt(5));
+        int x = bin2dec(b);
+
+        // the inter bits
+        b =  Character.toString(a.charAt(1)) + Character.toString(a.charAt(2)) + Character.toString(a.charAt(3)) +  Character.toString(a.charAt(4));
+        int y = bin2dec(b);
+
+        int s = S[x][y];
+        return dec2bin(s);
+    }
+
+    public void generateKeys()
     {
         String binKey = hex2bin(key);
         // apply PC-1 64 bits to 56
@@ -315,6 +353,25 @@ public class DES {
             System.out.println(bin2hex(binKey));
             keys[i] = binKey;
         }
+    }
+
+    // the round int is actually round number - 1, taken the index of the for in the main function
+    public String feistel(String block, int round){
+        // expanding the half block of 32 bits to 48 using the expansion permutation
+        block = permutation(block, E);
+
+        // xor with the round key
+        block = xor(block, keys[round]);
+
+        // apply the sboxes
+        String sBlock = "";
+        for (int i = 0; i < block.length(); i = i+6){
+            String s = block.substring(i, i+6);
+            sBlock = sBlock + applySbox(s, sboxes[i/6]);
+        }
+
+        // final permutation
+        return permutation(sBlock, P);
     }
 
 
