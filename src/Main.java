@@ -3,7 +3,7 @@
 public class Main {
     public static void main(String[] args) {
         DES des = new DES("AABB09182736CCDD");
-
+        System.out.println(des.encryptBlock("123456ABCD132536"));
 
     }
 }

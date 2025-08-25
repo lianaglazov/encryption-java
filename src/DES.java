@@ -18,7 +18,7 @@ public class DES {
         63, 55, 47, 39, 31, 23, 15, 7
     };
 
-    static int[] IP1 =
+    static int[] FP =
     {
         40, 8, 48, 16, 56, 24, 64, 32,
         39, 7, 47, 15, 55, 23, 63, 31,
@@ -145,6 +145,7 @@ public class DES {
     DES(String key)
     {
         this.key = key;
+        generateKeys();
     }
 
     String hex2bin(String hex)
@@ -258,6 +259,8 @@ public class DES {
             dec = dec/2;
         }
 
+        if (bin == "")
+            bin = "0000";
         while (bin.length()%4 != 0) {
             bin = "0" + bin;
         }
@@ -350,7 +353,6 @@ public class DES {
 
             // apply PC-2 56 to 48 bits
             binKey = permutation(binKey, PC2);
-            System.out.println(bin2hex(binKey));
             keys[i] = binKey;
         }
     }
@@ -359,10 +361,8 @@ public class DES {
     public String feistel(String block, int round){
         // expanding the half block of 32 bits to 48 using the expansion permutation
         block = permutation(block, E);
-
         // xor with the round key
         block = xor(block, keys[round]);
-
         // apply the sboxes
         String sBlock = "";
         for (int i = 0; i < block.length(); i = i+6){
@@ -372,6 +372,35 @@ public class DES {
 
         // final permutation
         return permutation(sBlock, P);
+    }
+
+    // the block is given in hex ?
+    public String encryptBlock(String block)
+    {
+        block = hex2bin(block);
+
+        // apply the initial permutation
+        block = permutation(block, IP);
+        String left = block.substring(0, 32);
+        String right = block.substring(32);
+
+        // 16 rounds
+        for (int i = 0; i < 16; i++){
+            // the right block goes into the feistel function and it is xor-ed with the left block
+            String f = feistel(right, i);
+            // the result of the feistel function is xor-ed with the left half
+            left = xor(left, f);
+            // the switch the left half (that is now the xor result) with the right half (the original, not the feistel result)
+            String a = left;
+            left = right;
+            right = a;
+        }
+
+        // after the last round the two halves of the block will be switched, so do right + left instead of left + right
+        block = right + left;
+        block = permutation(block, FP);
+
+        return bin2hex(block);
     }
 
 
