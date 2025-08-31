@@ -1,5 +1,4 @@
-import java.util.HashMap;
-
+import java.util.*;
 public class DES {
 
     String key;
@@ -279,6 +278,50 @@ public class DES {
         return dec;
     }
 
+    // separates the message into 64-bit blocks, adding padding (1 followed by how many 0 are necessary)
+    // the padding will be added whether the message length is a multiple of 64 or not
+    // to avoid losing data on the decryption in the case in which we have a msg of length divisible by 64
+    // that finishes with an 1 and a seq of 0s
+    String[] sepBlocks(String msg)
+    {
+        msg = str2hex(msg);
+        msg = hex2bin(msg);
+        int x = 64 - msg.length() % 64 - 1;
+        String padding = "1" + "0".repeat(x);
+        msg = msg + padding;
+
+        String[] blocks = new String[msg.length()/64 ];
+        for  (int i = 0; i< blocks.length; i++)
+        {
+            blocks[i] = msg.substring(i*64, i*64+64);
+        }
+
+        return blocks;
+    }
+
+    String retrieveFromBlocks(String[] blocks)
+    {
+        String msg = "";
+
+        for  (int i = 0; i < blocks.length - 1; i++)
+        {
+            msg = msg + blocks[i];
+        }
+
+        String lastBlock = blocks[blocks.length-1];
+        int i = 63;
+        while(i >= 0 & lastBlock.charAt(i) == '0')
+        {
+            i--;
+        }
+        lastBlock = lastBlock.substring(0, i);
+        msg = msg + lastBlock;
+
+        msg = bin2hex(msg);
+        msg = hex2str(msg);
+        return msg;
+    }
+
     // apply the permutation table to a binary block
     String permutation(String block, int[] perm)
     {
@@ -374,10 +417,9 @@ public class DES {
         return permutation(sBlock, P);
     }
 
-    // the block is given in hex ?
+    // the block is given in binary
     public String encryptBlock(String block)
     {
-        block = hex2bin(block);
 
         // apply the initial permutation
         block = permutation(block, IP);
@@ -400,7 +442,28 @@ public class DES {
         block = right + left;
         block = permutation(block, FP);
 
-        return bin2hex(block);
+        return block;
+    }
+
+    // decrypting is the same as encrypting but with the keys in reverse order
+    public String decryptBlock(String block)
+    {
+
+        block = permutation(block, IP);
+        String left = block.substring(0, 32);
+        String right = block.substring(32);
+
+        for (int i = 15; i >= 0; i--){
+            String f = feistel(right, i);
+            left = xor(left, f);
+            String a = left;
+            left = right;
+            right = a;
+        }
+        block = right + left;
+        block = permutation(block, FP);
+
+        return block;
     }
 
 

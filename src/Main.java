@@ -3,7 +3,14 @@
 public class Main {
     public static void main(String[] args) {
         DES des = new DES("AABB09182736CCDD");
-        System.out.println(des.encryptBlock("123456ABCD132536"));
+
+        DESECB desECB= new DESECB("AABB09182736CCDD");
+
+        String cipherText = desECB.encryptECB("hei ce faci??");
+        System.out.println(cipherText);
+
+        String decripted = desECB.decryptECB(cipherText);
+        System.out.println(decripted);
 
     }
 }
