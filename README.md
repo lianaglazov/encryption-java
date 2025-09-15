@@ -1,3 +1,4 @@
-Encryption algorithms implemented in Java.
+Encryption algorithms implemented in Java.  <br /> <br />
 So far:
-- working on des with ebc?
+- implemented des with ecb and cbc modes
+- trying ? to implement aes
