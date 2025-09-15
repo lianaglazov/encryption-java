@@ -32,7 +32,7 @@ public class DESCBC extends DES {
         String e = IV;
         for (int i = 0; i < blocks.length; i++)
         {
-            blocks[i] = xor(blocks[i], e);
+            blocks[i] = op.xor(blocks[i], e);
 
             String encBlock = encryptBlock(blocks[i]);
             cipher += encBlock;
@@ -40,14 +40,14 @@ public class DESCBC extends DES {
             e = encBlock;
         }
 
-        cipher = bin2hex(cipher);
+        cipher = op.bin2hex(cipher);
 
         return cipher;
     }
 
     public String decryptCBC(String cipher, String IV)
     {
-        cipher = hex2bin(cipher);
+        cipher = op.hex2bin(cipher);
 
         // separate intro blocks
         String msg = "";
@@ -56,7 +56,7 @@ public class DESCBC extends DES {
             String block = cipher.substring(i*64,(i+1)*64);
             // decrypt the block and then xor with the previous ciphertext or IV
             String decBlock = decryptBlock(block);
-            decBlock = xor(decBlock, e);
+            decBlock = op.xor(decBlock, e);
             e = block;
             msg += decBlock;
         }
@@ -69,8 +69,8 @@ public class DESCBC extends DES {
         }
         msg = msg.substring(0, i);
 
-        msg = bin2hex(msg);
-        msg = hex2str(msg);
+        msg = op.bin2hex(msg);
+        msg = op.hex2str(msg);
         return msg;
     }
 }

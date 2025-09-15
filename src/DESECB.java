@@ -11,12 +11,12 @@ public class DESECB extends DES {
             String encBlock = encryptBlock(blocks[i]);
             cipher += encBlock;
         }
-        cipher = bin2hex(cipher);
+        cipher = op.bin2hex(cipher);
         return cipher;
     }
 
     public String decryptECB(String cipher) {
-        cipher = hex2bin(cipher);
+        cipher = op.hex2bin(cipher);
 
         // separate intro blocks
         String msg = "";
@@ -34,8 +34,8 @@ public class DESECB extends DES {
         }
         msg = msg.substring(0, i);
 
-        msg = bin2hex(msg);
-        msg = hex2str(msg);
+        msg = op.bin2hex(msg);
+        msg = op.hex2str(msg);
         return msg;
 
     }

@@ -147,145 +147,14 @@ public class DES {
         generateKeys();
     }
 
-    String hex2bin(String hex)
-    {
-        String binary = "";
-
-        hex = hex.toUpperCase();
-
-        HashMap<Character, String> hashMap = new HashMap<Character, String>();
-
-        hashMap.put('0', "0000");
-        hashMap.put('1', "0001");
-        hashMap.put('2', "0010");
-        hashMap.put('3', "0011");
-        hashMap.put('4', "0100");
-        hashMap.put('5', "0101");
-        hashMap.put('6', "0110");
-        hashMap.put('7', "0111");
-        hashMap.put('8', "1000");
-        hashMap.put('9', "1001");
-        hashMap.put('A', "1010");
-        hashMap.put('B', "1011");
-        hashMap.put('C', "1100");
-        hashMap.put('D', "1101");
-        hashMap.put('E', "1110");
-        hashMap.put('F', "1111");
-
-        int i;
-        char ch;
-
-        for (i = 0; i < hex.length(); i++) {
-            ch = hex.charAt(i);
-
-            if (hashMap.containsKey(ch))
-                binary += hashMap.get(ch);
-            else {
-                binary = "Invalid Hexadecimal String";
-                return binary;
-            }
-        }
-        return binary;
-    }
-
-    String  bin2hex(String bin)
-    {
-        String hex = "";
-        HashMap<String, Character> hashMap = new HashMap<String, Character>();
-
-        hashMap.put("0000", '0');
-        hashMap.put("0001", '1');
-        hashMap.put("0010", '2');
-        hashMap.put("0011", '3');
-        hashMap.put("0100", '4');
-        hashMap.put("0101", '5');
-        hashMap.put("0110", '6');
-        hashMap.put("0111", '7');
-        hashMap.put("1000", '8');
-        hashMap.put("1001", '9');
-        hashMap.put("1010", 'A');
-        hashMap.put("1011", 'B');
-        hashMap.put("1100", 'C');
-        hashMap.put("1101", 'D');
-        hashMap.put("1110", 'E');
-        hashMap.put("1111", 'F');
-
-        int i;
-        String ch;
-        while (bin.length() % 4 != 0) {
-            bin = "0" + bin;
-        }
-        for (i = 0; i < bin.length(); i = i+4) {
-            ch = "";
-            ch = ch + bin.charAt(i);
-            ch = ch + bin.charAt(i+1);
-            ch = ch + bin.charAt(i+2);
-            ch = ch + bin.charAt(i+3);
-            hex = hex + hashMap.get(ch);
-        }
-
-        return hex;
-    }
-
-    String str2hex(String str)
-    {
-        StringBuilder sb = new StringBuilder();
-        char ch[] = str.toCharArray();
-        for (char c : ch) {
-            String hexString = Integer.toHexString(c);
-            sb.append(hexString);
-        }
-        return sb.toString();
-    }
-
-    String hex2str(String hex) {
-        StringBuilder output = new StringBuilder();
-
-        for (int i = 0; i < hex.length(); i += 2) {
-            String str = hex.substring(i, i + 2);
-            output.append((char) Integer.parseInt(str, 16));
-        }
-
-        return output.toString();
-    }
-
-    String dec2bin(int dec)
-    {
-        String bin = "";
-
-        while(dec > 0){
-            bin = dec%2 + bin;
-            dec = dec/2;
-        }
-
-        if (bin == "")
-            bin = "0000";
-        while (bin.length()%4 != 0) {
-            bin = "0" + bin;
-        }
-
-        return bin;
-    }
-
-    int bin2dec(String bin)
-    {
-        int dec = 0;
-        for  (int i = 0; i < bin.length(); i++) {
-            int bit = bin.charAt(i) - 48;
-            int x = bin.length() - i - 1;
-            dec = (int) (dec + bit * Math.pow(2, x));
-        }
-        return dec;
-    }
-
     // separates the message into 64-bit blocks, adding padding (1 followed by how many 0 are necessary)
     // the padding will be added whether the message length is a multiple of 64 or not
     // to avoid losing data on the decryption in the case in which we have a msg of length divisible by 64
     // that finishes with an 1 and a seq of 0s
     String[] sepBlocks(String msg)
     {
-        msg = str2hex(msg);
-        msg = hex2bin(msg);
+        msg = op.str2hex(msg);
+        msg = op.hex2bin(msg);
         int x = 64 - msg.length() % 64 - 1;
         String padding = "1" + "0".repeat(x);
         msg = msg + padding;
@@ -297,29 +166,6 @@ public class DES {
         }
 
         return blocks;
-    }
-
-    String retrieveFromBlocks(String[] blocks)
-    {
-        String msg = "";
-
-        for  (int i = 0; i < blocks.length - 1; i++)
-        {
-            msg = msg + blocks[i];
-        }
-
-        String lastBlock = blocks[blocks.length-1];
-        int i = 63;
-        while(i >= 0 & lastBlock.charAt(i) == '0')
-        {
-            i--;
-        }
-        lastBlock = lastBlock.substring(0, i);
-        msg = msg + lastBlock;
-
-        msg = bin2hex(msg);
-        msg = hex2str(msg);
-        return msg;
     }
 
     // apply the permutation table to a binary block
@@ -349,38 +195,24 @@ public class DES {
         return bin;
     }
 
-    String xor(String a, String b)
-    {
-        String xor = "";
-        for (int i = 0; i < a.length(); i++){
-            if (a.charAt(i) == b.charAt(i)){
-                xor = xor + "0";
-            }
-            else  {
-                xor = xor + "1";
-            }
-        }
-        return xor;
-    }
-
     // a is always a 6 bit binary number
     String applySbox(String a, int[][] S)
     {
         // the outer bits
         String b = Character.toString(a.charAt(0)) + Character.toString(a.charAt(5));
-        int x = bin2dec(b);
+        int x = op.bin2dec(b);
 
         // the inter bits
         b =  Character.toString(a.charAt(1)) + Character.toString(a.charAt(2)) + Character.toString(a.charAt(3)) +  Character.toString(a.charAt(4));
-        int y = bin2dec(b);
+        int y = op.bin2dec(b);
 
         int s = S[x][y];
-        return dec2bin(s);
+        return op.dec2bin(s);
     }
 
     public void generateKeys()
     {
-        String binKey = hex2bin(key);
+        String binKey = op.hex2bin(key);
         // apply PC-1 64 bits to 56
         binKey = permutation(binKey, PC1);
 
@@ -405,7 +237,7 @@ public class DES {
         // expanding the half block of 32 bits to 48 using the expansion permutation
         block = permutation(block, E);
         // xor with the round key
-        block = xor(block, keys[round]);
+        block = op.xor(block, keys[round]);
         // apply the sboxes
         String sBlock = "";
         for (int i = 0; i < block.length(); i = i+6){
@@ -431,7 +263,7 @@ public class DES {
             // the right block goes into the feistel function and it is xor-ed with the left block
             String f = feistel(right, i);
             // the result of the feistel function is xor-ed with the left half
-            left = xor(left, f);
+            left = op.xor(left, f);
             // the switch the left half (that is now the xor result) with the right half (the original, not the feistel result)
             String a = left;
             left = right;
@@ -455,7 +287,7 @@ public class DES {
 
         for (int i = 15; i >= 0; i--){
             String f = feistel(right, i);
-            left = xor(left, f);
+            left = op.xor(left, f);
             String a = left;
             left = right;
             right = a;
@@ -465,7 +297,4 @@ public class DES {
 
         return block;
     }
-
-
-
 }
