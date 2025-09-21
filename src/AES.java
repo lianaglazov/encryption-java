@@ -172,21 +172,22 @@ public class AES {
 
     AES(String key){
         this.key = key;
+        generateKeys();
     }
 
     // a is a 32-bit word
     String applySbox(String a)
     {
-        int x = op.bin2dec(op.hex2bin(a.substring(0,1)));
-        int y = op.bin2dec(op.hex2bin(a.substring(1)));
+        int x = op.hex2dec(a.substring(0,1));
+        int y = op.hex2dec(a.substring(1));
 
         return sbox[x][y];
     }
 
     String applyInvSbox(String a)
     {
-        int x = op.bin2dec(op.hex2bin(a.substring(0,1)));
-        int y = op.bin2dec(op.hex2bin(a.substring(1)));
+        int x = op.hex2dec(a.substring(0,1));
+        int y = op.hex2dec(a.substring(1));
 
         return invSbox[x][y];
     }
@@ -206,7 +207,7 @@ public class AES {
         return sWord;
     }
 
-    // gets a 128-bit block input and generates a 4x4 matrix with byte sized elements
+    // gets a 128-bit block input and generates a 4x4 matrix with byte sized elements arranged on columns
     String[][] getMatrix(String block)
     {
         String[][] matrix = new String[4][4];
@@ -214,11 +215,24 @@ public class AES {
         {
             for (int j = 0; j < 4; j++)
             {
-                matrix[i][j] = block.substring(0, 2);
+                matrix[j][i] = block.substring(0, 2);
                 block = block.substring(2);
             }
         }
         return matrix;
+    }
+
+    String getFromMatrix(String[][] matrix)
+    {
+        String block = "";
+        for(int i = 0; i < 4; i++)
+        {
+            for(int j = 0; j < 4; j++)
+            {
+                block += matrix[j][i];
+            }
+        }
+        return block;
     }
 
     // replaces the matrix elements with the sbox elem
@@ -249,7 +263,7 @@ public class AES {
 
     // this function gets a single column from the 4x4 matrix and mixes it according
     // to the rijndael table
-    String[] mixColumns(String[] column)
+    String[] mixColumn(String[] column)
     {
         String[] result  = new String[4];
         for (int i = 0; i < 4; i++) {
@@ -276,6 +290,26 @@ public class AES {
             }
         }
         return result;
+    }
+
+    // given the matrix, get each column and apply the mixColumn function
+    String[][] mixColumns(String[][] matrix)
+    {
+        String[][] sMatrix = new String[4][4];
+        for(int i = 0; i < 4; i++)
+        {
+            String[] column = new String[4];
+            for(int j = 0; j < 4; j++)
+            {
+                column[j] = matrix[j][i];
+            }
+            column = mixColumn(column);
+            for (int j = 0; j < 4; j++)
+            {
+                sMatrix[j][i] = column[j];
+            }
+        }
+        return  sMatrix;
     }
 
     void generateKeys()
@@ -305,8 +339,48 @@ public class AES {
 
             String k = K[0] + K[1] + K[2] + K[3];
             keys[i] = k;
-            System.out.println(keys[i]);
         }
+    }
+
+    // the algorithm proceeds as follows
+    // key expansion (already done in the class' constructor)
+    // initial add round key
+    // 9 rounds of subBytes, shiftRows, mixColumns and add round key
+    // last round without mixColumns
+    // the block is given in hex
+    public String encryptBlock(String block)
+    {
+        // initial add round key
+        block = op.xorHex(block, keys[0]);
+
+        // rounds from 1 to 9
+        for (int i = 1; i<10; i++)
+        {
+            // transform to matrix
+            String[][] m = getMatrix(block);
+
+            // apply subBytes, shiftRows and mixColumns
+            m = subBytes(m);
+            m = shiftRows(m);
+            m = mixColumns(m);
+
+            // transform back to block and xor with round key
+            block = getFromMatrix(m);
+            block = op.xorHex(block, keys[i]);
+        }
+
+        // last round without mix columns
+        String[][] m = getMatrix(block);
+
+        // apply subBytes, shiftRows and mixColumns
+        m = subBytes(m);
+        m = shiftRows(m);
+
+        // transform back to block and xor with round key
+        block = getFromMatrix(m);
+        block = op.xorHex(block, keys[10]);
+
+        return block;
     }
 
 }

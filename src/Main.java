@@ -26,16 +26,11 @@ public class Main {
 //        System.out.println(desCBC.decryptCBC(c2, IV2));
 //
         AES aes = new AES("3A94F62BC17E5D08A9B0C4E672F1D5AC");
-//
-//        System.out.println(aes.applySbox("90"));
 
-//        aes.generateKeys();
+        String block = "00000101030307070f0f1f1f3f3f7f7f";
 
-        String[] test = {"63", "7B", "C0", "D2"};
-        String[] res = aes.mixColumns(test);
-        for (int i = 0; i < res.length; i++) {
-            System.out.print(res[i]);
-        }
+        System.out.println(aes.encryptBlock(block));
+
 
     }
 
