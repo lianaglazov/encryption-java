@@ -170,6 +170,13 @@ public class AES {
         {3, 1, 1, 2}
     };
 
+    static int[][] invMixCol ={
+        {14, 11, 13, 9},
+        {9, 14, 11, 13},
+        {13, 9, 14, 11},
+        {11, 13, 9, 14 }
+    };
+
     AES(String key){
         this.key = key;
         generateKeys();
@@ -248,6 +255,18 @@ public class AES {
         return matrix;
     }
 
+    String[][] invSubBytes(String[][] matrix)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            for(int j = 0; j < 4; j++)
+            {
+                matrix[i][j] = applyInvSbox(matrix[i][j]);
+            }
+        }
+        return matrix;
+    }
+
     String[][] shiftRows(String[][] matrix)
     {
         String[][] sMatrix = new String[4][4];
@@ -261,13 +280,30 @@ public class AES {
         return sMatrix;
     }
 
+    String[][] invShiftRows(String[][] matrix)
+    {
+        String[][] sMatrix = new String[4][4];
+        sMatrix[0] = matrix[0];
+        for(int i = 0; i < 4; i++)
+        {
+            sMatrix[1][i] = matrix[1][(i+3)%4];
+            sMatrix[2][i] = matrix[2][(i+2)%4];
+            sMatrix[3][i] = matrix[3][(i+1)%4];
+        }
+        return sMatrix;
+    }
+
     // this function gets a single column from the 4x4 matrix and mixes it according
     // to the rijndael table
-    String[] mixColumn(String[] column)
+    String[] mixColumn(String[] column, Boolean inv)
     {
         String[] result  = new String[4];
         for (int i = 0; i < 4; i++) {
-            int[] rCol = mixCol[i];
+            int[] rCol;
+            if(inv)
+                rCol= invMixCol[i];
+            else
+                rCol= mixCol[i];
             result[i] = "00";
             for (int j = 0; j < 4; j++) {
                 // m is the result of the multiplication over the galois field
@@ -303,7 +339,26 @@ public class AES {
             {
                 column[j] = matrix[j][i];
             }
-            column = mixColumn(column);
+            column = mixColumn(column, false);
+            for (int j = 0; j < 4; j++)
+            {
+                sMatrix[j][i] = column[j];
+            }
+        }
+        return  sMatrix;
+    }
+
+    String[][] invMixColumns(String[][] matrix)
+    {
+        String[][] sMatrix = new String[4][4];
+        for(int i = 0; i < 4; i++)
+        {
+            String[] column = new String[4];
+            for(int j = 0; j < 4; j++)
+            {
+                column[j] = matrix[j][i];
+            }
+            column = mixColumn(column, true);
             for (int j = 0; j < 4; j++)
             {
                 sMatrix[j][i] = column[j];
@@ -383,4 +438,29 @@ public class AES {
         return block;
     }
 
+    public String decryptBlock(String block)
+    {
+        // inverse for the last round
+        block = op.xorHex(block, keys[10]);
+        String[][] m = getMatrix(block);
+        m = invShiftRows(m);
+        m = invSubBytes(m);
+
+        // going reverse on the first 9 rounds
+        for (int i = 9; i>0; i--) {
+            // round key first
+            block = getFromMatrix(m);
+            block = op.xorHex(block, keys[i]);
+            // the operations in inverse order
+            m = getMatrix(block);
+            m = invMixColumns(m);
+            m = invShiftRows(m);
+            m = invSubBytes(m);
+        }
+
+        // lastly adding the initial key
+        block = getFromMatrix(m);
+        block = op.xorHex(block, keys[0]);
+        return block;
+    }
 }

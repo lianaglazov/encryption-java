@@ -28,8 +28,10 @@ public class Main {
         AES aes = new AES("3A94F62BC17E5D08A9B0C4E672F1D5AC");
 
         String block = "00000101030307070f0f1f1f3f3f7f7f";
-
-        System.out.println(aes.encryptBlock(block));
+        String encBlock = aes.encryptBlock(block);
+        String decBlock = aes.decryptBlock(encBlock);
+        System.out.println(encBlock);
+        System.out.println(decBlock);
 
 
     }
