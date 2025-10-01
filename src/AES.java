@@ -182,6 +182,24 @@ public class AES {
         generateKeys();
     }
 
+    // the separate into blocks function is the same as in des, but for 128 bits blocks
+    String[] sepBlocks(String msg)
+    {
+        msg = op.str2hex(msg);
+        msg = op.hex2bin(msg);
+        int x = 128 - msg.length() % 128 - 1;
+        String padding = "1" + "0".repeat(x);
+        msg = msg + padding;
+
+        String[] blocks = new String[msg.length()/128 ];
+        for  (int i = 0; i< blocks.length; i++)
+        {
+            blocks[i] = op.bin2hex(msg.substring(i*128, i*128+128));
+        }
+
+        return blocks;
+    }
+
     // a is a 32-bit word
     String applySbox(String a)
     {

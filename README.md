@@ -1,4 +1,1 @@
-Encryption algorithms implemented in Java.  <br /> <br />
-So far:
-- implemented des with ecb and cbc modes
-- implementing aes 128
+DES and AES algorithms implemented in Java, with ECB and CBC modes for each.
